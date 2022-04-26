@@ -13,3 +13,4 @@ FONT = "calibri"
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+PIECE_GREEN_BG = (0, 128, 128)

@@ -35,6 +35,17 @@ def menu_screen(window: pygame.Surface, name: str) -> None:
 def chess_game(window: pygame.Surface, client: Client) -> None:
     board = client.board
 
+    board.draw(window)
+    pygame.display.update()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        
+        pygame.display.update()
+
 
 def main() -> None:
     pygame.init()

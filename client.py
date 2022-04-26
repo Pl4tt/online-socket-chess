@@ -12,6 +12,7 @@ class Client:
 
     def connect(self) -> bytes:
         self.socket.connect(self.server_addr)
+        self.send(self.name.encode("utf-8"))
         return self.socket.recv(4096*8)
 
     def disconnect(self) -> None:
