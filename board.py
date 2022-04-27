@@ -45,8 +45,8 @@ class Board:
         self.board[7][5] = Bishop(7, 5, "w", "bishop")
         self.board[7][6] = Knight(7, 6, "w", "knight")
         self.board[7][7] = Rook(7, 7, "w", "rook")
-        # # White pawn row
-        # self.board[6] = [Pawn(6, i, "w", "pawn") for i in range(8)]
+        # White pawn row
+        self.board[6] = [Pawn(6, i, "w", "pawn") for i in range(8)]
 
         for row in range(len(self.board)):
             for col in range(len(self.board[row])):

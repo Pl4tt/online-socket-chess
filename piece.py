@@ -217,9 +217,36 @@ class Knight(Piece):
         return candidates
 
 class Pawn(Piece):
+    def __init__(self, row: int, col: int, color: str, piece_name: str) -> None:
+        super().__init__(row, col, color, piece_name)
+
+        self.first_move = True
+
     def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
         candidates = set()
+    
+        direction = -1 if self.color == "w" else 1
+
+        for i in range(1, 2+int(self.first_move)):  # going forward
+            if self.row + i*direction >= 0 and self.row + i*direction < len(board):
+                if board[self.row+i*direction][self.col] is None:
+                    candidates.add((self.row+i*direction, self.col))
+            else:
+                break
+        
+        if self.row+1*direction < 0 or self.row+i*direction >= len(board):
+            return candidates
+
+        # diagonal kill
+        if self.col + 1 < len(board[self.row+1*direction]) and board[self.row+1*direction][self.col+1] is not None and board[self.row+1*direction][self.col+1].color != self.color:
+            candidates.add((self.row+1*direction, self.col+1))
+        if self.col - 1 >= 0 and board[self.row+1*direction][self.col-1] is not None and board[self.row+1*direction][self.col-1].color != self.color:
+            candidates.add((self.row+1*direction, self.col-1))
 
         return candidates
 
+    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface) -> bool:
+        self.first_move = False
+        
+        return super().move(row, col, board, window)
 
