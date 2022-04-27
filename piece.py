@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+from concurrent.futures.thread import ThreadPoolExecutor
 import pygame
 
 from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH
@@ -73,6 +74,24 @@ class Piece:
         self.draw(window)
         print("unselected", self.img_name)
 
+    def one_direction(self, board: list[list[Piece, None]], candidates: set, row_change: int, col_change: int) -> None:
+        row, col = self.row, self.col
+
+        while row >= 0 and col < len(board[row]):
+            row += row_change
+            col += col_change
+
+            if row < 0 or row >= len(board) or col < 0 or col >= len(board[row]):
+                return
+
+            if board[row][col] is None:
+                candidates.add((row, col))
+            elif board[row][col].color != self.color:
+                candidates.add((row, col))
+                return
+            elif board[row][col].color == self.color:
+                return
+
     def update_valid_moves(self, board: list[list[Piece, None]]) -> None:
         self.valid_moves = self.all_valid_moves(board)
 
@@ -120,71 +139,57 @@ class Queen(Piece):
     def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
         candidates = set()
 
+        change = [-1, 0]
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            for i in range(4):
+                change[int(i!=0)] *= -1
+
+                executor.submit(self.one_direction, board, candidates, *change)
+
+                change[int(i!=0)] *= -1
+
+                executor.submit(self.one_direction, board, candidates, *change)
+                
+                if i == 0:
+                    change = change[::-1]
+                if i == 1:
+                    change[0] = -1
+                
+                change[0] *= -1
+
+
         return candidates
 
 class Rook(Piece):
     def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
         candidates = set()
 
-        row, col = self.row-1 if self.row > 0 else self.row+1, self.col-1 if self.col > 0 else self.col+1
+        change = [1, 0]
 
-        for _ in range(len(board[row])-1):  # check row
-            if col != self.col and board[self.row][col] is None:
-                candidates.add((self.row, col))
-            elif col != self.col and board[self.row][col].color != self.color:
-                candidates.add((self.row, col))
-                if col >= self.col or self.col == len(board[row])-1:
-                    break
-                else:
-                    col = self.col + 1
-                    continue
-            elif col != self.col:
-                if col >= self.col or self.col == len(board[row])-1:
-                    break
-                else:
-                    col = self.col + 1
-                    continue
-
-            if col == 0:
-                col = self.col + 1
-            elif col < self.col:
-                col -= 1
-            elif col >= len(board[self.row])-1:
-                break
-            else:
-                col += 1
-
-        for _ in range(len(board)-1):  # check col
-            if row != self.row and board[row][self.col] is None:
-                candidates.add((row, self.col))
-            elif row != self.row and board[row][self.col].color != self.color:
-                candidates.add((row, self.col))
-                if row >= self.row or self.row == len(board)-1:
-                    break
-                else:
-                    row = self.row + 1
-                    continue
-            elif row != self.row:
-                if row >= self.row or self.row == len(board)-1:
-                    break
-                else:
-                    row = self.row + 1
-                    continue
-
-            if row == 0:
-                row = self.row + 1
-            elif row < self.row:
-                row -= 1
-            elif row >= len(board)-1:
-                break
-            else:
-                row += 1
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            for i in range(1, 5):
+                executor.submit(self.one_direction, board, candidates, *change)
+                
+                change = change[::-1]
+                if i%2 == 0:
+                    change[0] *= -1
 
         return candidates
 
 class Bishop(Piece):
     def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
         candidates = set()
+
+        change = [1, 1]
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            for i in range(1, 5):
+                executor.submit(self.one_direction, board, candidates, *change)
+                
+                change[1] *= -1
+                if i%2 == 0:
+                    change[0] *= -1
 
         return candidates
 
