@@ -16,6 +16,7 @@ connection_sockets = []
 
 def client_thread(client_socket: socket.socket, board: Board, connection_number: int) -> None:
     client_name = client_socket.recv(1024).decode("utf-8")
+    board.set_name(client_name)
     client_socket.send(pickle.dumps(board))
 
 

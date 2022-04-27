@@ -1,7 +1,8 @@
 import pygame
+from board import Board
 
 from client import Client
-from constants import SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, WHITE, CAPTION, BLACK
+from constants import BOARD_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, TILE_LENGTH, WHITE, CAPTION, BLACK
 
 
 def menu_screen(window: pygame.Surface, name: str) -> None:
@@ -43,7 +44,17 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-        
+            
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                row = int((y - (SCREEN_HEIGHT - BOARD_LENGTH)/2)//TILE_LENGTH)
+                col = int((x - (SCREEN_WIDTH - BOARD_LENGTH)/2)//TILE_LENGTH)
+                
+                if not 0 <= row <= 7 or not 0 <= col <= 7:
+                    continue
+
+                board.click(client.name, row, col, window)
+
         pygame.display.update()
 
 

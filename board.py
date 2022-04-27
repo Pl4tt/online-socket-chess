@@ -16,6 +16,8 @@ class Board:
         self.previous_move = None
         self.turn = wp_name
 
+        self.selected = None
+
         self.is_ready = self.wp_name is not None \
                         and self.bp_name is not None \
                         and self.turn is not None
@@ -23,66 +25,103 @@ class Board:
         self.board = [[None for _ in range(8)] for _ in range(8)]
         
         # Black 1st row
-        self.board[0][0] = Rook(0, 0, "b")
-        self.board[0][1] = Knight(0, 1, "b")
-        self.board[0][2] = Bishop(0, 2, "b")
-        self.board[0][3] = King(0, 3, "b")
-        self.board[0][4] = Queen(0, 4, "b")
-        self.board[0][5] = Bishop(0, 5, "b")
-        self.board[0][6] = Knight(0, 6, "b")
-        self.board[0][7] = Rook(0, 7, "b")
+        self.board[0][0] = Rook(0, 0, "b", "rook")
+        self.board[0][1] = Knight(0, 1, "b", "knight")
+        self.board[0][2] = Bishop(0, 2, "b", "bishop")
+        self.board[0][3] = Queen(0, 3, "b", "queen")
+        self.board[0][4] = King(0, 4, "b", "king")
+        self.board[0][5] = Bishop(0, 5, "b", "bishop")
+        self.board[0][6] = Knight(0, 6, "b", "knight")
+        self.board[0][7] = Rook(0, 7, "b", "rook")
         # Black pawn row
-        self.board[1] = [Pawn(1, i, "b") for i in range(8)]
+        self.board[1] = [Pawn(1, i, "b", "pawn") for i in range(8)]
 
         # White 1st row
-        self.board[7][0] = Rook(7, 0, "w")
-        self.board[7][1] = Knight(7, 1, "w")
-        self.board[7][2] = Bishop(7, 2, "w")
-        self.board[7][4] = Queen(7, 3, "w")
-        self.board[7][3] = King(7, 4, "w")
-        self.board[7][5] = Bishop(7, 5, "w")
-        self.board[7][6] = Knight(7, 6, "w")
-        self.board[7][7] = Rook(7, 7, "w")
+        self.board[7][0] = Rook(7, 0, "w", "rook")
+        self.board[7][1] = Knight(7, 1, "w", "knight")
+        self.board[7][2] = Bishop(7, 2, "w", "bishop")
+        self.board[7][3] = Queen(7, 3, "w", "queen")
+        self.board[7][4] = King(7, 4, "w", "king")
+        self.board[7][5] = Bishop(7, 5, "w", "bishop")
+        self.board[7][6] = Knight(7, 6, "w", "knight")
+        self.board[7][7] = Rook(7, 7, "w", "rook")
         # White pawn row
-        self.board[6] = [Pawn(6, i, "w") for i in range(8)]
-    
-    def set_b_name(self, b_name: str) -> None:
-        self.b_name = b_name
-        
-        self.is_ready = self.wp_name is not None \
-                        and self.bp_name is not None \
-                        and self.turn is not None
-    
-    def set_w_name(self, w_name: str) -> None:
-        self.w_name = w_name
-        self.turn = w_name
+        self.board[6] = [Pawn(6, i, "w", "pawn") for i in range(8)]
 
+        for row in range(len(self.board)):
+            for col in range(len(self.board[row])):
+                if self.board[row][col] is not None:
+                    self.board[row][col].update_valid_moves(self.board)
+    
+    def set_name(self, p_name: str) -> None:
+        if self.is_ready:
+            return
+
+        if not self.wp_name:
+            self.wp_name = p_name
+            self.turn = p_name
+        elif not self.bp_name:
+            self.bp_name = p_name
+        
+    def update_is_ready(self) -> None:
         self.is_ready = self.wp_name is not None \
                         and self.bp_name is not None \
                         and self.turn is not None
     
-    def move(self, p_name: str, pos_before: tuple[int], pos_after: tuple[int]) -> bool:
+    def click(self, p_name: str, row: int, col: int, window: pygame.Surface) -> None:
+        if p_name != self.wp_name and p_name != self.bp_name:
+            return
+        
+        p_color = "b" if p_name == self.bp_name else "w"
+        
+        if self.selected is None and self.board[row][col] is not None and self.board[row][col].color == p_color:
+            self.selected = (row, col)
+            self.board[row][col].select(window)
+            return
+        elif self.selected is None:
+            return
+
+        srow, scol = self.selected
+
+        if self.board[srow][scol] is not None and self.board[srow][scol].color != p_color:
+            return
+        
+        if not self.move(p_name, self.selected, (row, col), window):
+            self.board[srow][scol].unselect(window)
+
+            if self.board[row][col] is not None and self.board[row][col].color == p_color:
+                self.selected = (row, col)
+                self.board[row][col].select(window)
+            else:
+                self.selected = None
+        else:
+            self.selected = None        
+        
+        self.draw(window)
+
+    def move(self, p_name: str, pos_before: tuple[int], pos_after: tuple[int], window: pygame.Surface) -> bool:
+        if p_name != self.wp_name and p_name != self.bp_name:
+            return False
+
         bx, by = pos_before
-        ax, ay = pos_after
+
+        p_color = "w" if p_name == self.wp_name else "b"
 
         if self.board[bx][by] is None:
             return False
 
-        if p_name == self.wp_name:
-            if self.board[bx][by].color == "w":
-                if self.board[bx][by].move(*pos_after):
-                    self.board[ax][ay] = self.board[bx][by]
-                    self.board[bx][by] = None
-                    return True
+        if self.board[bx][by].color == p_color:
+            if self.board[bx][by].move(*pos_after, self.board, window):
+                self.update_valid_moves()
+                return True
 
-        if p_name == self.bp_name:
-            if self.board[bx][by].color == "b":
-                if self.board[bx][by].move(*pos_after):
-                    self.board[ax][ay] = self.board[bx][by]
-                    self.board[bx][by] = None
-                    return True
-        
         return False
+
+    def update_valid_moves(self) -> None:
+        for row in range(len(self.board)):
+            for piece in self.board[row]:
+                if piece is not None:
+                    piece.update_valid_moves(self.board)
 
     def draw(self, window: pygame.Surface) -> None:
         board_rect = board_surface.get_rect()
