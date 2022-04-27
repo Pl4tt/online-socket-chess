@@ -197,6 +197,23 @@ class Knight(Piece):
     def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
         candidates = set()
 
+        change = [1, -2]
+
+        for i in range(8):
+            if i%2 == 0:
+                change = change[::-1]
+            if i%4 == 0:
+                change[0] *= -1
+
+            x = self.row + change[0]
+            y = self.col + change[1]
+
+            if x >= 0 and x < len(board) and y >= 0 and y < len(board[x]):
+                if board[x][y] is None or board[x][y].color != self.color:
+                    candidates.add((x, y))
+            
+            change[int(i%4 in (0, 1))] *= -1
+
         return candidates
 
 class Pawn(Piece):
