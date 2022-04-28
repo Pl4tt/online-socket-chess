@@ -64,15 +64,16 @@ class Piece:
         self.is_selected = False
         self.valid_moves = set()
     
-    def select(self, window: pygame.Surface) -> None:
+    def select(self, window: pygame.Surface=None) -> None:
         self.is_selected = True
-        self.draw(window)
-        print("selected", self.img_name)
 
-    def unselect(self, window: pygame.Surface) -> None:
+        if window is not None:
+            self.draw(window)
+
+    def unselect(self, window: pygame.Surface=None) -> None:
         self.is_selected = False
-        self.draw(window)
-        print("unselected", self.img_name)
+        if window is not None:
+            self.draw(window)
 
     def one_direction(self, board: list[list[Piece, None]], candidates: set, row_change: int, col_change: int) -> None:
         row, col = self.row, self.col
@@ -95,7 +96,7 @@ class Piece:
     def update_valid_moves(self, board: list[list[Piece, None]]) -> None:
         self.valid_moves = self.all_valid_moves(board)
 
-    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface) -> bool:
+    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None) -> bool:
         if (row, col) not in self.valid_moves:
             return False
         
@@ -105,7 +106,8 @@ class Piece:
         self.row = row
         self.col = col
 
-        self.draw(window)
+        if window is not None:
+            self.draw(window)
 
         return True
     
@@ -245,7 +247,7 @@ class Pawn(Piece):
 
         return candidates
 
-    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface) -> bool:
+    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None) -> bool:
         self.first_move = False
         
         return super().move(row, col, board, window)

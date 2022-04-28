@@ -1,4 +1,5 @@
 import os
+from typing import Any
 import pygame
 
 from constants import BOARD_LENGTH, SCREEN_HEIGHT, SCREEN_WIDTH
@@ -63,28 +64,39 @@ class Board:
         elif not self.bp_name:
             self.bp_name = p_name
         
+        self.update_is_ready()
+        
     def update_is_ready(self) -> None:
         self.is_ready = self.wp_name is not None \
                         and self.bp_name is not None \
                         and self.turn is not None
     
-    def click(self, p_name: str, row: int, col: int, window: pygame.Surface) -> None:
+    def command(self, command: dict[str, Any], window: pygame.Surface=None) -> None:
+        if command.get("command") == "move":
+            self.move(**command)
+        
+        if window is not None:
+            self.draw(window)
+
+    def click(self, p_name: str, row: int, col: int, window: pygame.Surface=None, **_) -> bool:
+        ret = False
+
         if p_name != self.wp_name and p_name != self.bp_name:
-            return
+            return ret
         
         p_color = "b" if p_name == self.bp_name else "w"
         
         if self.selected is None and self.board[row][col] is not None and self.board[row][col].color == p_color:
             self.selected = (row, col)
             self.board[row][col].select(window)
-            return
+            return ret
         elif self.selected is None:
-            return
+            return ret
 
         srow, scol = self.selected
 
         if self.board[srow][scol] is not None and self.board[srow][scol].color != p_color:
-            return
+            return ret
         
         if not self.move(p_name, self.selected, (row, col), window):
             self.board[srow][scol].unselect(window)
@@ -95,11 +107,17 @@ class Board:
             else:
                 self.selected = None
         else:
-            self.selected = None        
+            self.selected = None
+            ret = True
         
-        self.draw(window)
+        if window is not None:
+            self.draw(window)
+        
+        return ret
 
-    def move(self, p_name: str, pos_before: tuple[int], pos_after: tuple[int], window: pygame.Surface) -> bool:
+    def move(self, p_name: str, pos_before: tuple[int], pos_after: tuple[int], window: pygame.Surface=None, **_) -> bool:
+        if not self.is_ready:
+            return False
         if p_name != self.wp_name and p_name != self.bp_name:
             return False
 
@@ -110,9 +128,10 @@ class Board:
         if self.board[bx][by] is None:
             return False
 
-        if self.board[bx][by].color == p_color:
+        if self.board[bx][by].color == p_color and p_name == self.turn:
             if self.board[bx][by].move(*pos_after, self.board, window):
                 self.update_valid_moves()
+                self.turn = self.bp_name if self.turn == self.wp_name else self.wp_name
                 return True
 
         return False

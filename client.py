@@ -12,19 +12,19 @@ class Client:
 
     def connect(self) -> bytes:
         self.socket.connect(self.server_addr)
-        self.send(self.name.encode("utf-8"))
+        self.send(bytes(self.name, "utf-8"), dump_pickle=False)
         return self.socket.recv(4096*8)
 
     def disconnect(self) -> None:
         self.socket.close()
     
-    def send(self, content: Any, dump_pickle: bool=False) -> None:
+    def send(self, content: Any, dump_pickle: bool=True) -> None:
         if dump_pickle:
             content = pickle.dumps(content)
 
         self.socket.send(content)
 
-    def receive(self, bufsize: int, load_pickle: bool=False) -> Any:
+    def receive(self, bufsize: int, load_pickle: bool=True) -> Any:
         result = self.socket.recv(bufsize)
 
         if load_pickle:

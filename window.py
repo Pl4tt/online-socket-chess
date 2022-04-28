@@ -1,5 +1,5 @@
+import pickle
 import pygame
-from board import Board
 
 from client import Client
 from constants import BOARD_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, TILE_LENGTH, WHITE, CAPTION, BLACK
@@ -40,8 +40,14 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
     pygame.display.update()
 
     while True:
+        if client.name != board.turn:
+            command = client.receive(4096)  # wait for their move
+            command["window"] = window
+            board.command(command, window)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                client.disconnect()
                 pygame.quit()
                 exit()
             
@@ -53,7 +59,15 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
                 if not 0 <= row <= 7 or not 0 <= col <= 7:
                     continue
 
-                board.click(client.name, row, col, window)
+                selected = board.selected
+
+                if board.click(client.name, row, col, window):
+                    client.send({
+                        "command": "move",
+                        "p_name": client.name,
+                        "pos_before": selected,
+                        "pos_after": (row, col),
+                    })  # send your move
 
         pygame.display.update()
 
