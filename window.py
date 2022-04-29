@@ -1,5 +1,5 @@
 import os
-import pickle
+import time
 import pygame
 
 from client import Client
@@ -72,14 +72,19 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
 
     board = client.board
 
-    board.draw(window)
+    board.draw(window, client.name)
     pygame.display.update()
 
     while True:
+        if board.winner is not None:
+            time.sleep(5)
+            menu_screen(window, client.name)
+
         if client.name != board.turn:
             try:
                 command = client.receive(4096)  # wait for their move
                 command["window"] = window
+                command["my_name"] = client.name
                 board.command(command, window)
             except ConnectionResetError:  # connection closed
                 menu_screen(window, client.name, connection_lost=True)

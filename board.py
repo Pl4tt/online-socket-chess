@@ -1,8 +1,9 @@
 import os
-from typing import Any
 import pygame
+from typing import Any
+from copy import deepcopy
 
-from constants import BOARD_LENGTH, SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import BLACK, BOARD_LENGTH, FONT, GREEN, RED, SCREEN_HEIGHT, SCREEN_WIDTH, WHITE
 from piece import King, Queen, Rook, Bishop, Knight, Pawn
 
 
@@ -23,6 +24,8 @@ class Board:
                         and self.bp_name is not None \
                         and self.turn is not None
         self.winner = None
+        
+        self.is_check = False
 
         self.board = [[None for _ in range(8)] for _ in range(8)]
         
@@ -77,7 +80,7 @@ class Board:
             self.move(**command)
         
         if window is not None:
-            self.draw(window)
+            self.draw(window, command.get("my_name"))
 
     def click(self, p_name: str, row: int, col: int, window: pygame.Surface=None, **_) -> bool:
         ret = False
@@ -112,20 +115,21 @@ class Board:
             ret = True
         
         if window is not None:
-            self.draw(window)
+            self.draw(window, p_name)
         
         return ret
 
-    def update_winner(self) -> None:
-        pass
+    def update_winner(self, winner: str) -> None:
+        self.winner = winner
 
     def move(self, p_name: str, pos_before: tuple[int], pos_after: tuple[int], window: pygame.Surface=None, **_) -> bool:
-        if not self.is_ready:
+        if not self.is_ready or self.winner is not None:
             return False
         if p_name != self.wp_name and p_name != self.bp_name:
             return False
 
         bx, by = pos_before
+        ax, ay = pos_after
 
         p_color = "w" if p_name == self.wp_name else "b"
 
@@ -133,7 +137,12 @@ class Board:
             return False
 
         if self.board[bx][by].color == p_color and p_name == self.turn:
+            killed_piece = deepcopy(self.board[ax][ay])
             if self.board[bx][by].move(*pos_after, self.board, window):
+                if killed_piece is not None:
+                    if killed_piece.piece_name == "king":
+                        self.update_winner(self.turn)
+
                 self.update_valid_moves()
                 self.turn = self.bp_name if self.turn == self.wp_name else self.wp_name
                 return True
@@ -141,18 +150,59 @@ class Board:
         return False
 
     def update_valid_moves(self) -> None:
+        check = set()
+
         for row in range(len(self.board)):
             for piece in self.board[row]:
                 if piece is not None:
-                    piece.update_valid_moves(self.board)
+                    check.add(piece.update_valid_moves(self.board))
+        
+        self.is_check = True in check
 
-    def draw(self, window: pygame.Surface) -> None:
+    def draw(self, window: pygame.Surface, p_name: str= None) -> None:
+        pygame.draw.rect(window, BLACK, (0, 0, (SCREEN_WIDTH - BOARD_LENGTH)/2, SCREEN_HEIGHT))
+
         board_rect = board_surface.get_rect()
         board_rect.left = (SCREEN_WIDTH - BOARD_LENGTH)/2
         board_rect.top = (SCREEN_HEIGHT - BOARD_LENGTH)/2
         window.blit(board_surface, board_rect)
+        
+        font = pygame.font.SysFont(FONT, SCREEN_WIDTH//15)
+
+        text_bp = font.render(self.bp_name, True, GREEN if self.turn == self.bp_name else WHITE)
+        text_wp = font.render(self.wp_name, True, GREEN if self.turn == self.wp_name else WHITE)
+        text_bp_rect = text_bp.get_rect()
+        text_bp_rect.centerx = SCREEN_WIDTH/2
+        text_bp_rect.centery = (SCREEN_HEIGHT - BOARD_LENGTH)/4
+        text_wp_rect = text_wp.get_rect()
+        text_wp_rect.centerx = SCREEN_WIDTH/2
+        text_wp_rect.centery = SCREEN_HEIGHT - (SCREEN_HEIGHT - BOARD_LENGTH)/4
+        window.blit(text_bp, text_bp_rect)
+        window.blit(text_wp, text_wp_rect)
+
+        if p_name:
+            text_you = font.render(f"You: {p_name}", True, WHITE)
+            text_you = pygame.transform.rotate(text_you, -90)
+            text_you_rect = text_you.get_rect()
+            text_you_rect.center = SCREEN_WIDTH - (SCREEN_WIDTH - BOARD_LENGTH)/4, SCREEN_HEIGHT/2
+            window.blit(text_you, text_you_rect)
+
+        if self.is_check:
+            text = font.render("Check", True, RED)
+            text = pygame.transform.rotate(text, 90)
+            text_rect = text.get_rect()
+            text_rect.centerx = (SCREEN_WIDTH - BOARD_LENGTH)/4
+            text_rect.centery = SCREEN_HEIGHT/2
+            window.blit(text, text_rect)
 
         for row in range(len(self.board)):
             for piece in self.board[row]:
                 if piece is not None:
                     piece.draw(window)
+        
+        if self.winner is not None:
+            font = pygame.font.SysFont(FONT, SCREEN_HEIGHT//7)
+            text = font.render(f"{self.winner} WON", True, GREEN)
+            text_rect = text.get_rect()
+            text_rect.center = SCREEN_WIDTH/2, SCREEN_HEIGHT/2
+            window.blit(text, text_rect)

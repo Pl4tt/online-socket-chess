@@ -1,9 +1,9 @@
 from __future__ import annotations
 import os
-from concurrent.futures.thread import ThreadPoolExecutor
 import pygame
+from concurrent.futures.thread import ThreadPoolExecutor
 
-from constants import BLACK, PIECE_GREEN_BG, RED, TILE_LENGTH
+from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH
 from utils import coordinate_builder
 
 
@@ -116,7 +116,7 @@ class Piece:
         if window is not None:
             self.draw(window)
 
-    def one_direction(self, board: list[list[Piece, None]], candidates: set, row_change: int, col_change: int) -> None:
+    def one_direction(self, board: list[list[Piece, None]], candidates: set, row_change: int, col_change: int, check: set) -> None:
         row, col = self.row, self.col
 
         while row >= 0 and col < len(board[row]):
@@ -128,14 +128,20 @@ class Piece:
 
             if board[row][col] is None:
                 candidates.add((row, col))
+                if board[row][col] is not None and board[row][col].piece_name == "king":
+                    check.add(True)
             elif board[row][col].color != self.color:
                 candidates.add((row, col))
+                if board[row][col] is not None and board[row][col].piece_name == "king":
+                    check.add(True)
                 return
             elif board[row][col].color == self.color:
                 return
 
-    def update_valid_moves(self, board: list[list[Piece, None]]) -> None:
-        self.valid_moves = self.all_valid_moves(board)
+    def update_valid_moves(self, board: list[list[Piece, None]]) -> bool:
+        self.valid_moves, check = self.all_valid_moves(board)
+        
+        return check
 
     def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None) -> bool:
         if (row, col) not in self.valid_moves:
@@ -182,20 +188,49 @@ class Piece:
 
 
 class King(Piece):
-    def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
+    def __init__(self, row: int, col: int, color: str, piece_name: str) -> None:
+        super().__init__(row, col, color, piece_name)
+
+        self.rochade = set()
+
+    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None) -> bool:
+        if (row, col) in self.rochade:
+            if col < self.col:
+                board[self.row][0].move(self.row, self.col-1, board, window)
+            if col > self.col:
+                board[self.row][7].move(self.row, self.col+1, board, window)
+        
+        return super().move(row, col, board, window)
+
+    def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
         candidates = set()
+        self.rochade = set()
+        check = False
 
         for x in range(self.row-1, self.row+2):
             for y in range(self.col-1, self.col+2):
                 if x < len(board) and y < len(board[x]) and (x, y) != (self.row, self.col) and (board[x][y] is None or board[x][y].color != self.color):
                     if 0 <= x <= 7 and 0 <= y <= 7:
                         candidates.add((x, y))
+                        if board[x][y] is not None and board[x][y].piece_name == "king":
+                            check = True
 
-        return candidates
+        # check for rochade
+        if self.first_move and board[self.row][0] is not None and board[self.row][0].first_move:
+            if board[self.row][self.col-3] is None and board[self.row][self.col-2] is None and board[self.row][self.col-1] is None:
+                candidates.add((self.row, self.col-2))
+                self.rochade.add((self.row, self.col-2))
+        if self.first_move and board[self.row][7] is not None and board[self.row][7].first_move:
+            if board[self.row][self.col+2] is None and board[self.row][self.col+1] is None:
+                candidates.add((self.row, self.col+2))
+                self.rochade.add((self.row, self.col+2))
+
+        return candidates, check
 
 class Queen(Piece):
-    def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
+    def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
         candidates = set()
+        check = set()
 
         change = [-1, 0]
 
@@ -203,11 +238,11 @@ class Queen(Piece):
             for i in range(4):
                 change[int(i!=0)] *= -1
 
-                executor.submit(self.one_direction, board, candidates, *change)
+                executor.submit(self.one_direction, board, candidates, *change, check)
 
                 change[int(i!=0)] *= -1
 
-                executor.submit(self.one_direction, board, candidates, *change)
+                executor.submit(self.one_direction, board, candidates, *change, check)
                 
                 if i == 0:
                     change = change[::-1]
@@ -217,43 +252,46 @@ class Queen(Piece):
                 change[0] *= -1
 
 
-        return candidates
+        return candidates, True in check
 
 class Rook(Piece):
-    def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
+    def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
         candidates = set()
+        check = set()
 
         change = [1, 0]
 
         with ThreadPoolExecutor(max_workers=4) as executor:
             for i in range(1, 5):
-                executor.submit(self.one_direction, board, candidates, *change)
+                executor.submit(self.one_direction, board, candidates, *change, check)
                 
                 change = change[::-1]
                 if i%2 == 0:
                     change[0] *= -1
 
-        return candidates
+        return candidates, True in check
 
 class Bishop(Piece):
-    def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
+    def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
         candidates = set()
+        check = set()
 
         change = [1, 1]
 
         with ThreadPoolExecutor(max_workers=4) as executor:
             for i in range(1, 5):
-                executor.submit(self.one_direction, board, candidates, *change)
+                executor.submit(self.one_direction, board, candidates, *change, check)
                 
                 change[1] *= -1
                 if i%2 == 0:
                     change[0] *= -1
 
-        return candidates
+        return candidates, True in check
 
 class Knight(Piece):
-    def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
+    def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
         candidates = set()
+        check = False
 
         change = [1, -2]
 
@@ -269,14 +307,17 @@ class Knight(Piece):
             if x >= 0 and x < len(board) and y >= 0 and y < len(board[x]):
                 if board[x][y] is None or board[x][y].color != self.color:
                     candidates.add((x, y))
+                    if board[x][y] is not None and board[x][y].piece_name == "king":
+                        check = True
             
             change[int(i%4 in (0, 1))] *= -1
 
-        return candidates
+        return candidates, check
 
 class Pawn(Piece):
-    def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
+    def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
         candidates = set()
+        check = False
     
         direction = -1 if self.color == "w" else 1
 
@@ -293,8 +334,12 @@ class Pawn(Piece):
         # diagonal kill
         if self.col + 1 < len(board[self.row+1*direction]) and board[self.row+1*direction][self.col+1] is not None and board[self.row+1*direction][self.col+1].color != self.color:
             candidates.add((self.row+1*direction, self.col+1))
+            if board[self.row+1*direction][self.col+1] is not None and board[self.row+1*direction][self.col+1].piece_name == "king":
+                check = True
         if self.col - 1 >= 0 and board[self.row+1*direction][self.col-1] is not None and board[self.row+1*direction][self.col-1].color != self.color:
             candidates.add((self.row+1*direction, self.col-1))
+            if board[self.row+1*direction][self.col-1] is not None and board[self.row+1*direction][self.col-1].piece_name == "king":
+                check = True
 
-        return candidates
+        return candidates, check
 
