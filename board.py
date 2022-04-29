@@ -22,6 +22,7 @@ class Board:
         self.is_ready = self.wp_name is not None \
                         and self.bp_name is not None \
                         and self.turn is not None
+        self.winner = None
 
         self.board = [[None for _ in range(8)] for _ in range(8)]
         
@@ -114,6 +115,9 @@ class Board:
             self.draw(window)
         
         return ret
+
+    def update_winner(self) -> None:
+        pass
 
     def move(self, p_name: str, pos_before: tuple[int], pos_after: tuple[int], window: pygame.Surface=None, **_) -> bool:
         if not self.is_ready:

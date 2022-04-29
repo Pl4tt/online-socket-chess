@@ -3,39 +3,65 @@ import os
 from concurrent.futures.thread import ThreadPoolExecutor
 import pygame
 
-from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH
+from constants import BLACK, PIECE_GREEN_BG, RED, TILE_LENGTH
 from utils import coordinate_builder
 
 
 king_img_w = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "white_pieces.png")).subsurface((0, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 king_img_w.set_colorkey(BLACK)
+king_img_ws = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((0, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+king_img_ws.set_colorkey(BLACK)
 king_img_b = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "black_pieces.png")).subsurface((0, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 king_img_b.set_colorkey(PIECE_GREEN_BG)
+king_img_bs = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((0, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+king_img_bs.set_colorkey(BLACK)
 
 queen_img_w = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "white_pieces.png")).subsurface((256, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 queen_img_w.set_colorkey(BLACK)
+queen_img_ws = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((256, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+queen_img_ws.set_colorkey(BLACK)
 queen_img_b = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "black_pieces.png")).subsurface((256, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 queen_img_b.set_colorkey(PIECE_GREEN_BG)
+queen_img_bs = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((256, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+queen_img_bs.set_colorkey(BLACK)
 
 rook_img_w = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "white_pieces.png")).subsurface((384, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 rook_img_w.set_colorkey(BLACK)
+rook_img_ws = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((384, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+rook_img_ws.set_colorkey(BLACK)
 rook_img_b = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "black_pieces.png")).subsurface((384, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 rook_img_b.set_colorkey(PIECE_GREEN_BG)
+rook_img_bs = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((384, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+rook_img_bs.set_colorkey(BLACK)
 
 bishop_img_w = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "white_pieces.png")).subsurface((128, 0, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 bishop_img_w.set_colorkey(BLACK)
+bishop_img_ws = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((128, 0, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+bishop_img_ws.set_colorkey(BLACK)
 bishop_img_b = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "black_pieces.png")).subsurface((256, 0, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 bishop_img_b.set_colorkey(PIECE_GREEN_BG)
+bishop_img_bs = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((256, 0, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+bishop_img_bs.set_colorkey(BLACK)
 
 knight_img_w = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "white_pieces.png")).subsurface((128, 128, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 knight_img_w.set_colorkey(BLACK)
+knight_img_ws = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((128, 128, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+knight_img_ws.set_colorkey(BLACK)
 knight_img_b = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "black_pieces.png")).subsurface((256, 128, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 knight_img_b.set_colorkey(PIECE_GREEN_BG)
+knight_img_bs = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((256, 128, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+knight_img_bs.set_colorkey(BLACK)
 
 pawn_img_w = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "white_pieces.png")).subsurface((0, 384, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 pawn_img_w.set_colorkey(BLACK)
+pawn_img_ws = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((0, 384, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+pawn_img_ws.set_colorkey(BLACK)
 pawn_img_b = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "black_pieces.png")).subsurface((0, 384, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
 pawn_img_b.set_colorkey(PIECE_GREEN_BG)
+pawn_img_bs = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "selected_pieces.png")).subsurface((0, 384, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
+pawn_img_bs.set_colorkey(BLACK)
+
+valid_move_dot = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "valid_move_dot.png")), (TILE_LENGTH, TILE_LENGTH))
 
 images = {
     "king_w": king_img_w,
@@ -50,6 +76,19 @@ images = {
     "knight_b": knight_img_b,
     "pawn_w": pawn_img_w,
     "pawn_b": pawn_img_b,
+    
+    "king_ws": king_img_ws,
+    "king_bs": king_img_bs,
+    "queen_ws": queen_img_ws,
+    "queen_bs": queen_img_bs,
+    "rook_ws": rook_img_ws,
+    "rook_bs": rook_img_bs,
+    "bishop_ws": bishop_img_ws,
+    "bishop_bs": bishop_img_bs,
+    "knight_ws": knight_img_ws,
+    "knight_bs": knight_img_bs,
+    "pawn_ws": pawn_img_ws,
+    "pawn_bs": pawn_img_bs,
 }
 
 
@@ -110,6 +149,8 @@ class Piece:
         self.row = row
         self.col = col
 
+        self.is_selected = False
+
         if window is not None:
             self.draw(window)
 
@@ -117,16 +158,27 @@ class Piece:
     
     def draw(self, window: pygame.Surface) -> tuple[int]:
         x, y = coordinate_builder(self.row, self.col)
+        
+        if not self.is_selected:
+            img = images.get(self.img_name)
+        else:
+            img = images.get(self.img_name + "s")
 
-        if self.is_selected:
-            pass
+            for row, col in self.valid_moves:
+                dotx, doty = coordinate_builder(row, col)
+                
+                dot_rect = valid_move_dot.get_rect()
+                dot_rect.left = dotx
+                dot_rect.top = doty
 
-        img = images.get(self.img_name)
+                window.blit(valid_move_dot, dot_rect)
+    
         img_rect = img.get_rect()
         img_rect.left = x
         img_rect.top = y
 
         window.blit(img, img_rect)
+
 
 
 class King(Piece):
