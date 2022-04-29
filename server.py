@@ -32,6 +32,13 @@ def client_thread(client_socket: socket.socket, board: Board, connection_number:
     board.set_name(client_name)
     time.sleep(1) # wait until both clients have set the name
 
+    if client_names[connection_number] == client_names[communicating_client_num]:
+        client_socket.close()
+        print("[LOST] connection to a client")
+        connection_count -= 1
+        return
+
+
     client_socket.send(pickle.dumps(board))
 
     while True:
@@ -39,7 +46,10 @@ def client_thread(client_socket: socket.socket, board: Board, connection_number:
             command = client_socket.recv(4096)
             board.command(pickle.loads(command))
             connection_sockets[communicating_client_num].send(command)
-        except ConnectionResetError:
+        except (ConnectionResetError, ConnectionAbortedError, EOFError):
+            client_socket.close()
+            print("[LOST] connection to a client")
+            connection_sockets[communicating_client_num].close()
             print("[LOST] connection to a client")
             connection_count -= 1
             return

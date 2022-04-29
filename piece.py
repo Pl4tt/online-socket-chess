@@ -63,6 +63,8 @@ class Piece:
         self.img_name = f"{piece_name}_{color}"
         self.is_selected = False
         self.valid_moves = set()
+
+        self.first_move = True
     
     def select(self, window: pygame.Surface=None) -> None:
         self.is_selected = True
@@ -99,6 +101,8 @@ class Piece:
     def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None) -> bool:
         if (row, col) not in self.valid_moves:
             return False
+            
+        self.first_move = False
         
         board[row][col] = board[self.row][self.col]
         board[self.row][self.col] = None
@@ -219,11 +223,6 @@ class Knight(Piece):
         return candidates
 
 class Pawn(Piece):
-    def __init__(self, row: int, col: int, color: str, piece_name: str) -> None:
-        super().__init__(row, col, color, piece_name)
-
-        self.first_move = True
-
     def all_valid_moves(self, board: list[list[Piece, None]]) -> set:
         candidates = set()
     
@@ -246,9 +245,4 @@ class Pawn(Piece):
             candidates.add((self.row+1*direction, self.col-1))
 
         return candidates
-
-    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None) -> bool:
-        self.first_move = False
-        
-        return super().move(row, col, board, window)
 
