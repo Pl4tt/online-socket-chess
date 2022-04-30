@@ -1,8 +1,10 @@
 import os
 import time
 import pygame
+import tkinter as tk
 
 from client import Client
+from piece import get_piece
 from constants import BOARD_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, TILE_LENGTH, WHITE, CAPTION, BLACK, RED
 
 
@@ -106,11 +108,31 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
                 selected = board.selected
 
                 if board.click(client.name, row, col, window):
+                    replacement = None
+
+                    if board.board[row][col].piece_name == "pawn" and (row == 0 and board.board[row][col].color == "w" or row == 7 and board.board[row][col].color == "b"):
+                        new_piece = []
+
+                        root = tk.Tk()
+                        tk.Label(root, text="Enter the piece you want to replace your pawn with").grid(row=0)
+                        piece_input = tk.Entry(root)
+                        piece_input.grid(row=1)
+                        tk.Button(root, text="Enter", command=lambda: new_piece.append(get_piece(root, piece_input, row, col, board.board[row][col].color))).grid(row=2, pady=4)
+
+                        root.mainloop()
+
+                        board.board[row][col] = new_piece[-1]
+                        board.update_valid_moves()
+                        board.board[row][col].draw(window)
+                        
+                        replacement = new_piece[-1].piece_name
+
                     client.send({
                         "command": "move",
                         "p_name": client.name,
                         "pos_before": selected,
                         "pos_after": (row, col),
+                        "replacement": replacement,
                     })  # send your move
 
         pygame.display.update()

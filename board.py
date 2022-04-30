@@ -82,7 +82,7 @@ class Board:
         if window is not None:
             self.draw(window, command.get("my_name"))
 
-    def click(self, p_name: str, row: int, col: int, window: pygame.Surface=None, **_) -> bool:
+    def click(self, p_name: str, row: int, col: int, window: pygame.Surface=None, replacement: str=None, **_) -> bool:
         ret = False
 
         if p_name != self.wp_name and p_name != self.bp_name:
@@ -102,7 +102,7 @@ class Board:
         if self.board[srow][scol] is not None and self.board[srow][scol].color != p_color:
             return ret
         
-        if not self.move(p_name, self.selected, (row, col), window):
+        if not self.move(p_name, self.selected, (row, col), window, replacement):
             self.board[srow][scol].unselect(window)
 
             if self.board[row][col] is not None and self.board[row][col].color == p_color:
@@ -122,7 +122,7 @@ class Board:
     def update_winner(self, winner: str) -> None:
         self.winner = winner
 
-    def move(self, p_name: str, pos_before: tuple[int], pos_after: tuple[int], window: pygame.Surface=None, **_) -> bool:
+    def move(self, p_name: str, pos_before: tuple[int], pos_after: tuple[int], window: pygame.Surface=None, replacement: str=None, **_) -> bool:
         if not self.is_ready or self.winner is not None:
             return False
         if p_name != self.wp_name and p_name != self.bp_name:
@@ -138,7 +138,7 @@ class Board:
 
         if self.board[bx][by].color == p_color and p_name == self.turn:
             killed_piece = deepcopy(self.board[ax][ay])
-            if self.board[bx][by].move(*pos_after, self.board, window):
+            if self.board[bx][by].move(*pos_after, self.board, window, replacement):
                 if killed_piece is not None:
                     if killed_piece.piece_name == "king":
                         self.update_winner(self.turn)
@@ -156,7 +156,7 @@ class Board:
             for piece in self.board[row]:
                 if piece is not None:
                     check.add(piece.update_valid_moves(self.board))
-        
+
         self.is_check = True in check
 
     def draw(self, window: pygame.Surface, p_name: str= None) -> None:

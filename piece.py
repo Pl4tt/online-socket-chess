@@ -1,10 +1,12 @@
 from __future__ import annotations
 import os
 import pygame
+import tkinter as tk
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH
 from utils import coordinate_builder
+from client import Client
 
 
 king_img_w = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "white_pieces.png")).subsurface((0, 256, 128, 128)), (TILE_LENGTH, TILE_LENGTH))
@@ -92,6 +94,39 @@ images = {
 }
 
 
+def create_piece(row: int, col: int, piece_name: str, color: str) -> Piece | None:
+    match piece_name.lower():
+        case "queen":
+            return Queen(row, col, color, "queen")
+        case "knight":
+            return Knight(row, col, color, "knight")
+        case "rook":
+            return Rook(row, col, color, "rook")
+        case "bishop":
+            return Bishop(row, col, color, "bishop")
+
+    return None
+
+def get_piece(root: tk.Tk, piece_input: tk.Entry, row: int, col: int, color: str) -> Piece | None:
+    piece = piece_input.get()
+
+
+    match piece.lower():
+        case "queen":
+            root.destroy()
+            return Queen(row, col, color, "queen")
+        case "knight":
+            root.destroy()
+            return Knight(row, col, color, "knight")
+        case "rook":
+            root.destroy()
+            return Rook(row, col, color, "rook")
+        case "bishop":
+            root.destroy()
+            return Bishop(row, col, color, "bishop")
+
+    return create_piece(row, col, piece, color)
+
 
 class Piece:
     def __init__(self, row: int, col: int, color: str, piece_name: str) -> None:
@@ -143,7 +178,7 @@ class Piece:
         
         return check
 
-    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None) -> bool:
+    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None, replacement: str=None) -> bool:
         if (row, col) not in self.valid_moves:
             return False
             
@@ -157,8 +192,12 @@ class Piece:
 
         self.is_selected = False
 
+        if replacement:
+            board[self.row][self.col] = create_piece(self.row, self.col, replacement, self.color)
+            board[self.row][self.col].first_move = False
+
         if window is not None:
-            self.draw(window)
+            board[self.row][self.col].draw(window)
 
         return True
     
@@ -186,21 +225,20 @@ class Piece:
         window.blit(img, img_rect)
 
 
-
 class King(Piece):
     def __init__(self, row: int, col: int, color: str, piece_name: str) -> None:
         super().__init__(row, col, color, piece_name)
 
         self.rochade = set()
 
-    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None) -> bool:
+    def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface=None, replacement: str=None) -> bool:
         if (row, col) in self.rochade:
             if col < self.col:
-                board[self.row][0].move(self.row, self.col-1, board, window)
+                board[self.row][0].move(self.row, self.col-1, board, window, replacement)
             if col > self.col:
-                board[self.row][7].move(self.row, self.col+1, board, window)
+                board[self.row][7].move(self.row, self.col+1, board, window, replacement)
         
-        return super().move(row, col, board, window)
+        return super().move(row, col, board, window, replacement)
 
     def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
         candidates = set()
@@ -329,7 +367,7 @@ class Pawn(Piece):
                 break
         
         if self.row+1*direction < 0 or self.row+i*direction >= len(board):
-            return candidates
+            return candidates, check
 
         # diagonal kill
         if self.col + 1 < len(board[self.row+1*direction]) and board[self.row+1*direction][self.col+1] is not None and board[self.row+1*direction][self.col+1].color != self.color:
