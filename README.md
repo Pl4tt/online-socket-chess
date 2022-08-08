@@ -14,5 +14,5 @@ If you do not have a server and want to test it, you can also test it locally on
 To do that you need to clone this repo, run the server.py file and then run some instances of the game by running the window.py file a few times.
 
 ## Hints
-Checkmate will not work. You will need to kill the king in order to win the game.
-
+- Checkmate will not work. You will need to kill the king in order to win the game.
+- En Passant won't work either.
